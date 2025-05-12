@@ -6,7 +6,7 @@ class GeminiLLM:
     A custom adapter for Google's Gemini models to work with Autogen.
     """
 
-    def __init__(self, api_key: str, model: str = "gemini-1.5-pro-001"):
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash"):
         """
         Initialize the Gemini adapter.
 

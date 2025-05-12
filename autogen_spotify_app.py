@@ -11,6 +11,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from gemini_adapter import GeminiLLM
 from autogen import AssistantAgent, UserProxyAgent, GroupChat, GroupChatManager
+from wordcloud import WordCloud
 
 # Title and page configuration
 st.set_page_config(page_title="Spotify Lyrics Analyzer with Autogen", layout="wide")
@@ -36,7 +37,7 @@ with st.sidebar:
                 config = {
                     "config_list": [
                         {
-                            "model": "gemini-1.5-pro-001",
+                            "model": "gemini-1.5-flash",
                             "api_key": gemini_api_key
                         }
                     ]
@@ -110,13 +111,18 @@ def get_lyrics(artist, title):
     except Exception:
         return None
 
+# Function to generate wordcloud 
+def generate_wordcloud(text):
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(text)
+    return wordcloud
+
 def setup_autogen_agents(gemini_api_key):
     gemini_llm = GeminiLLM(api_key=gemini_api_key)
 
     playlist_agent_config = {
         "name": "playlist_agent",
         "llm_config": {
-            "config_list": [{"model": "gemini-1.5-pro-001", "api_key": gemini_api_key}],
+            "config_list": [{"model": "gemini-1.5-flash", "api_key": gemini_api_key}],
             "cache_seed": 42
         },
         "system_message": """You are a Playlist Agent specialized in extracting and organizing data 
@@ -128,7 +134,7 @@ def setup_autogen_agents(gemini_api_key):
     lyrics_agent_config = {
         "name": "lyrics_agent",
         "llm_config": {
-            "config_list": [{"model": "gemini-1.5-pro-001", "api_key": gemini_api_key}],
+            "config_list": [{"model": "gemini-1.5-flash", "api_key": gemini_api_key}],
             "cache_seed": 42
         },
         "system_message": """You are a Lyrics Analysis Agent specialized in analyzing song lyrics. 
@@ -258,7 +264,7 @@ def main():
         return
     
     # Create analysis tabs
-    tab1, tab2, tab3 = st.tabs(["Playlist Info", "Lyrics Analysis", "Tracks"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Playlist Info", "Lyrics Analysis", "Tracks", "Word Cloud"])
     
     with st.spinner("Setting up AutoGen agents..."):
         agents = setup_autogen_agents(gemini_key)
@@ -306,6 +312,9 @@ def main():
             # Update progress
             progress_bar.progress((i + 1) / len(tracks))
     
+    # Concatenate all lyrics 
+    all_lyrics = " ".join([track['lyrics'] for track in tracks_with_lyrics if track.get('lyrics')])
+
     # Display playlist information in Tab 1
     with tab1:
         if playlist_data.get("images"):
@@ -357,6 +366,18 @@ def main():
                         st.markdown(f"**Lyrics Preview:**\n```\n{lyrics_preview}\n```")
                     else:
                         st.info("Lyrics not found")
+
+    # Display word cloud in Tab 4
+    with tab4:
+        st.subheader("Lyrics Word Cloud")
+        if all_lyrics:
+            wordcloud = generate_wordcloud(all_lyrics)
+            fig, ax = plt.subplots(figsize=(10, 5))
+            ax.imshow(wordcloud, interpolation='bilinear')
+            ax.axis("off")
+            st.pyplot(fig)
+        else:
+            st.warning("No lyrics available to generate a word cloud.")
 
 if __name__ == "__main__":
     main()

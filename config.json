@@ -1,7 +1,7 @@
 {
     "config_list": [
         {
-            "model": "gemini-1.5-pro-001",
+            "model": "gemini-1.5-flash",
             "api_key": "YOUR_API_KEY"
         }
     ]
