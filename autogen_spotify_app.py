@@ -211,7 +211,7 @@ def generate_wordcloud(text):
     words = jieba.cut(text)
     processed_text = " ".join(words)
 
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(processed_text)
+    wordcloud = WordCloud(width=800, height=400, background_color='white', font_path="TaipeiSansTCBeta-Regular.ttf",).generate(processed_text)
     return wordcloud
 
 def setup_autogen_agents(gemini_api_key):
