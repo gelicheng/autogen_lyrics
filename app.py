@@ -3,7 +3,7 @@ from ui.sidebar import render_sidebar
 from core.client_flow import playlist_client_flow
 from core.oauth_flow import playlist_oauth_flow
 from core.music_cluster import render_music_clusters_graph
-from ui.tabs import display_playlist_info, display_tracks_list, display_track_analyzer
+from ui.tabs import display_playlist_info, display_tracks_list, display_track_analyzer, display_playback_controls
 from ui.chatbot import music_chatbot_ui
 
 st.set_page_config(page_title="Spotify Lyrics Analyzer with Autogen", layout="wide")
@@ -19,7 +19,9 @@ def main():
         st.session_state['active_tab'] = 0
 
     if st.session_state.get('analysis_ready'):
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Playlist Info", "Tracks List", "Track Analyzer", "Music Chatbot", "Music Web"])
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            "Playlist Info", "Tracks List", "Track Analyzer", "Music Chatbot", "Music Web", "Playback"
+            ])
         with tab1:
             display_playlist_info(
                 st.session_state['playlist_data'], 
@@ -43,6 +45,8 @@ def main():
             render_music_clusters_graph(
                 st.session_state['tracks_with_lyrics']
             )
+        with tab6:
+            display_playback_controls()
         if st.button("Start Over", key="start_over"):
             for key in ['analysis_ready', 'playlist_data', 'tracks_with_lyrics', 'agents', 'active_tab']:
                 if key in st.session_state:

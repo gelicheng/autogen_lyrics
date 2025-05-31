@@ -3,6 +3,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from core.autogen import analyze_playlist_with_agents
 from core.lyrics import generate_wordcloud, compute_sentiment_scores, plot_mood_radar
+from core.spotify import play_track, pause_playback, next_track, get_current_playback, get_playback_queue
 
 def display_playlist_info(playlist_data, tracks_with_lyrics, agents):
     st.session_state['active_tab'] = 0
@@ -100,3 +101,37 @@ def display_track_analyzer(playlist_data, tracks_with_lyrics, agents):
             result = analyze_playlist_with_agents(agents, playlist_data, [selected_track], "lyrics")
             st.markdown("**Lyrics Analysis Result:**")
             st.write(result)
+
+def display_playback_controls():
+    st.subheader("🎧 Spotify Playback Controls")
+
+    access_token = st.session_state.get("access_token")
+    if not access_token:
+        st.warning("Please log in to Spotify first.")
+        return
+
+    if st.button("▶️ Play"):
+        result = play_track(access_token)
+        st.success(result)
+
+    if st.button("⏸️ Pause"):
+        result = pause_playback(access_token)
+        st.success(result)
+
+    if st.button("⏭️ Next"):
+        result = next_track(access_token)
+        st.success(result)
+
+    if st.button("📋 Now Playing"):
+        result = get_current_playback(access_token)
+        st.info(result)
+
+    st.markdown("### 📜 Upcoming Tracks in Queue")
+    queue = get_playback_queue(access_token)
+    if queue:
+        for i, track in enumerate(queue[:5]):
+            name = track["name"]
+            artist = ", ".join([a["name"] for a in track["artists"]])
+            st.markdown(f"{i+1}. **{name}** - *{artist}*")
+    else:
+        st.info("Queue is empty or not available.")
