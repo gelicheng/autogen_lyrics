@@ -9,3 +9,5 @@ jieba>=0.42.1
 wordcloud>=1.9.3
 opencc-python-reimplemented>=0.1.6
 spotipy>=2.23.0
+networkx>=2.5
+pyvis>=0.3.2

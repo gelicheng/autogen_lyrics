@@ -61,6 +61,7 @@ def get_spotify_client():
 
         if token_info:
             sp = spotipy.Spotify(auth_manager=sp_oauth)
+            st.session_state['access_token'] = token_info['access_token']
             print("Spotify client created successfully")  # Debugging line
             try:
                 user = sp.current_user()
@@ -90,14 +91,29 @@ def playlist_oauth_flow():
             st.session_state['token_info'] = True
             user_col, button_col = st.columns([3, 1])
             user = sp.current_user()
+            if not user:
+                st.warning("Failed to retrieve Spotify user info. Please try logging in again.")
+                logout_spotify()
+                return
+            
+            # Check if user is Premium
+            is_premium = user.get("product", "").lower() == "premium"
+            st.session_state["is_premium"] = is_premium
+
             with user_col:
                 st.success(f"Logged in as: {user['display_name']}")
+                if not is_premium:
+                    st.warning("⚠️ Your account is not Spotify Premium. Queueing and playback controls will be disabled.")
             with button_col:
                 if st.button("Logout", key="oauth_logout_button"):
                     logout_spotify()
                     st.rerun()
 
             playlists = sp.current_user_playlists()
+            if not playlists or "items" not in playlists:
+                st.warning("No playlists found in your account.")
+                return
+            
             playlist_names = [pl["name"] for pl in playlists["items"]]
             playlist_ids = [pl["id"] for pl in playlists["items"]]
 
@@ -117,6 +133,12 @@ def playlist_oauth_flow():
                     try:
                         playlist_data = sp.playlist(selected_id)
                         tracks = sp.playlist_tracks(selected_id)
+                        if not playlist_data or "tracks" not in playlist_data:
+                            st.error("Failed to retrieve playlist metadata.")
+                            return
+                        if not tracks or "items" not in tracks:
+                            st.error("Failed to retrieve playlist tracks. Please make sure your playlist is accessible.")
+                            return
                     except Exception:
                         st.error("Failed to connect to Spotify. Please check your authentication.")
                         return

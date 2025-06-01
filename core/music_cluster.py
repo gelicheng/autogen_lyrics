@@ -3,6 +3,7 @@ import streamlit as st
 import networkx as nx
 from pyvis.network import Network
 from collections import defaultdict
+import streamlit.components.v1 as components
 
 def cluster_tracks(tracks_with_lyrics, cluster_by="genre"):
     """
@@ -108,5 +109,5 @@ def render_music_clusters_graph(tracks_with_lyrics):
     G = build_track_graph(clusters, track_attrs)
     html = visualize_graph_networkx(G)
     st.markdown(f"### Clustered by: {cluster_by.capitalize()}")
-    st.components.v1.html(html, height=600, scrolling=True)
+    components.html(html, height=600, scrolling=True)
 

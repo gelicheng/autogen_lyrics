@@ -109,6 +109,10 @@ def display_playback_controls():
     if not access_token:
         st.warning("Please log in to Spotify first.")
         return
+    
+    if not st.session_state.get("is_premium", False):
+        st.warning("🔒 Playback control features require Spotify Premium.")
+        return
 
     if st.button("▶️ Play"):
         result = play_track(access_token)

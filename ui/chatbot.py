@@ -35,6 +35,11 @@ def music_chatbot_ui(agents, tracks_with_lyrics):
                     st.session_state.pending_song_results = None
                     st.rerun()
         elif is_song_request(user_input):
+            # Block non-premium users from entering queue logic
+            if not st.session_state.get("is_premium", False):
+                reply = "⚠️ Sorry, only Spotify Premium users can queue songs or control playback."
+                st.session_state.chat_history.append({"role": "assistant", "content": reply})
+                return
             access_token = st.session_state.get("access_token")
             if not access_token:
                 reply = "⚠️ Please log in to Spotify first to queue a song."
