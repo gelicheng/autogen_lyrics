@@ -1,8 +1,9 @@
 ### File: ui/tabs.py
+import re
 import streamlit as st
 import matplotlib.pyplot as plt
 from core.autogen import analyze_playlist_with_agents
-from core.lyrics import generate_wordcloud, compute_sentiment_scores, plot_mood_radar
+from core.lyrics import generate_wordcloud, compute_sentiment_scores, plot_mood_radar, contains_chinese
 from core.spotify import play_track, pause_playback, next_track, get_current_playback, get_playback_queue
 
 def display_playlist_info(playlist_data, tracks_with_lyrics, agents):
@@ -54,7 +55,12 @@ def display_tracks_list(tracks_with_lyrics):
     for i, track in enumerate(filtered_tracks):
         with st.expander(f"{i+1}. {track['title']} - {track['artist']}"):
             if track.get('lyrics') and track['lyrics'] != "Lyrics not found":
-                st.markdown(f"**Lyrics Preview:**\n```{track['lyrics'][:500]}\n```")
+                # If the lyrics contain Chinese characters OR are not mostly ASCII (e.g., English),
+                # display them as plain text (markdown) to avoid font issues in code blocks
+                if contains_chinese(track['lyrics']) or not all(ord(c) < 128 for c in track['lyrics'][:500]):
+                    st.markdown(f"**Lyrics Preview:**\n\n{track['lyrics'][:500]}")
+                else:
+                    st.markdown(f"**Lyrics Preview:**\n```{track['lyrics'][:500]}\n```")
             else:
                 st.info("Lyrics not found")
 

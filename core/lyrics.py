@@ -9,6 +9,9 @@ import requests
 
 chinese_converter = OpenCC('s2t')
 
+def contains_chinese(text):
+    return bool(re.search(r'[\u4e00-\u9fff]', text))
+
 def get_lyrics_en(artist, title):
     url = f"https://api.lyrics.ovh/v1/{artist.strip().lower().replace(' ', '%20')}/{title.strip().lower().replace(' ', '%20')}"
     try:
@@ -74,17 +77,40 @@ def compute_sentiment_scores(lyrics):
         return {e: 0.5 for e in ["joy", "sadness", "anger", "fear", "love", "surprise"]}
     text = lyrics.lower()
     emotion_words = {
-        "joy": ["happy", "joy", "delight"],
-        "sadness": ["sad", "cry", "tear"],
-        "anger": ["angry", "rage", "hate"],
-        "fear": ["fear", "scared", "panic"],
-        "love": ["love", "adore", "kiss"],
-        "surprise": ["surprise", "shock", "amazed"]
+        "joy": [
+            "happy", "joy", "delight",
+            "快樂", "開心", "喜悅", "高興", "歡樂", "愉快", "幸福", "微笑"
+        ],
+        "sadness": [
+            "sad", "cry", "tear",
+            "難過", "悲傷", "淚水", "哭泣", "哀傷", "傷心", "失落", "低落"
+        ],
+        "anger": [
+            "angry", "rage", "hate",
+            "生氣", "憤怒", "怒火", "氣憤", "爆炸", "火大", "激動", "仇恨"
+        ],
+        "fear": [
+            "fear", "scared", "panic",
+            "害怕", "恐懼", "擔心", "驚慌", "緊張", "膽小", "焦慮", "不安"
+        ],
+        "love": [
+            "love", "adore", "kiss",
+            "愛", "戀", "想你", "抱抱", "親吻", "喜歡", "心動", "陪伴", "甜蜜"
+        ],
+        "surprise": [
+            "surprise", "shock", "amazed",
+            "驚訝", "嚇到", "意外", "突然", "驚喜", "出乎意料", "震驚", "意想不到"
+        ]
     }
+
     counts = {e: 0 for e in emotion_words}
-    for e, words in emotion_words.items():
-        for w in words:
-            counts[e] += text.split().count(w)
+    if contains_chinese(lyrics):
+        words = list(jieba.cut(lyrics))
+    else:
+        words = lyrics.lower().split()
+
+    for e, keywords in emotion_words.items():
+        counts[e] += sum(words.count(k) for k in keywords)
     max_count = max(counts.values()) or 1
     return {e: 0.1 + 0.8 * (c / max_count) for e, c in counts.items()}
 
