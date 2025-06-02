@@ -10,7 +10,7 @@ import requests
 
 spotify_client_id = "b9e0979d54c449d4a1b7f23a1be1d329"
 spotify_client_secret = "03559d2dc6b643e8af412d5930ee4ec2"
-suno_api_key = "b05e6e742e5b2a4043bd9c32bed4c57f"
+suno_api_key = "8e8e006fc210e31c1948ef33c850ad0f"
 
 flask_app = Flask(__name__)
 
@@ -27,26 +27,42 @@ callback_port = find_available_port()
 @flask_app.route("/callback", methods=["POST"])
 def receive_callback():
     try:
-        data = request.json
+        incoming_data = request.json
         os.makedirs("data", exist_ok=True)
 
-        if os.path.exists("data/music.json"):
+        file_path = "data/music.json"
+
+        # 嘗試載入現有資料
+        if os.path.exists(file_path):
             try:
-                existing_data = json.load(open("data/music.json", "r", encoding="utf-8"))
-                if "data" in existing_data and "data" in existing_data["data"]:
-                    if "data" in data and "data" in data["data"]:
-                        existing_data["data"]["data"].extend(data["data"]["data"])
-                        data = existing_data
+                with open(file_path, "r", encoding="utf-8") as f:
+                    existing_data = json.load(f)
+
+                # 確保格式正確再進行合併
+                if (
+                    isinstance(existing_data, dict) and
+                    isinstance(existing_data.get("data"), dict) and
+                    isinstance(existing_data["data"].get("data"), list) and
+                    isinstance(incoming_data, dict) and
+                    isinstance(incoming_data.get("data"), dict) and
+                    isinstance(incoming_data["data"].get("data"), list)
+                ):
+                    existing_data["data"]["data"].extend(incoming_data["data"]["data"])
+                    incoming_data = existing_data  # 將結果寫回
+
             except Exception as e:
                 st.error(f"Error merging data: {str(e)}")
 
-        with open("data/music.json", "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        # 儲存最新資料
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(incoming_data, f, ensure_ascii=False, indent=2)
 
+        # 設置 flag 用於 streamlit 自動重載
         with open("data/music_updated.flag", "w") as f:
             f.write(str(time.time()))
 
         return jsonify({"code": 200, "msg": "Callback received"})
+
     except Exception as e:
         return jsonify({"code": 500, "msg": f"Error: {str(e)}"})
 
@@ -54,7 +70,9 @@ def run_flask():
     flask_app.run(host="0.0.0.0", port=callback_port)
 
 def start_callback_server():
-    threading.Thread(target=run_flask, daemon=True).start()
+    if "flask_started" not in st.session_state:
+        threading.Thread(target=run_flask, daemon=True).start()
+        st.session_state["flask_started"] = True
 
 def start_ngrok():
     try:
@@ -65,7 +83,18 @@ def start_ngrok():
     except:
         pass
 
-    ngrok_path = "/usr/local/bin/ngrok"
+    config_path = "config.json"
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        ngrok_path = config.get("config_list", [{}])[0].get("ngrok_path", "/usr/local/bin/ngrok")
+    else:
+        ngrok_path = "/usr/local/bin/ngrok"
+
+    if not os.path.isfile(ngrok_path):
+        st.error(f"Cannot find the ngrok executable: {ngrok_path}")
+        return f"http://127.0.0.1:{callback_port}/callback"
+
     subprocess.Popen([ngrok_path, "http", str(callback_port)], stdout=subprocess.DEVNULL)
     time.sleep(2)
     try:
@@ -106,7 +135,7 @@ def gen_song_ui():
                 st.session_state["generation_in_progress"] = False
                 st.session_state["active_tab"] = 1
                 st.session_state["last_music_check"] = mtime
-                st.experimental_rerun()
+                st.rerun()
 
     with st.form("music_form"):
         prompt = st.text_area("Prompt (idea or lyrics)")

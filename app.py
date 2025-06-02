@@ -3,7 +3,10 @@ from ui.sidebar import render_sidebar
 from core.client_flow import playlist_client_flow
 from core.oauth_flow import playlist_oauth_flow
 from core.music_cluster import render_music_clusters_graph
-from ui.tabs import display_playlist_info, display_tracks_list, display_track_analyzer, display_playback_controls
+from ui.tabs import (
+    display_playlist_info, display_tracks_list, display_track_analyzer,
+    display_playback_controls, display_song_generator, display_song_gallery
+)
 from ui.chatbot import music_chatbot_ui
 
 st.set_page_config(page_title="Spotify Lyrics Analyzer with Autogen", layout="wide")
@@ -19,8 +22,9 @@ def main():
         st.session_state['active_tab'] = 0
 
     if st.session_state.get('analysis_ready'):
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-            "Playlist Info", "Tracks List", "Track Analyzer", "Music Chatbot", "Music Web", "Playback"
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+            "Playlist Info", "Tracks List", "Track Analyzer", "Music Chatbot", "Music Web",
+            "Playback", "Generate Song", "Song Gallery"
             ])
         with tab1:
             display_playlist_info(
@@ -52,6 +56,11 @@ def main():
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()
+        with tab7:
+            display_song_generator()
+        with tab8:
+            display_song_gallery()
+
     else:
         auth_method = st.radio(
             "Choose how you want to access playlists:",

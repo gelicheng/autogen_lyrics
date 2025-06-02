@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from core.autogen import analyze_playlist_with_agents
 from core.lyrics import generate_wordcloud, compute_sentiment_scores, plot_mood_radar, contains_chinese
 from core.spotify import play_track, pause_playback, next_track, get_current_playback, get_playback_queue
+from core.gen_song import gen_song_ui, gen_song_player_ui, start_callback_server
 
 def display_playlist_info(playlist_data, tracks_with_lyrics, agents):
     st.session_state['active_tab'] = 0
@@ -145,3 +146,14 @@ def display_playback_controls():
             st.markdown(f"{i+1}. **{name}** - *{artist}*")
     else:
         st.info("Queue is empty or not available.")
+
+def display_song_generator():
+    st.subheader("🎼 Music Generation")
+    if "flask_started" not in st.session_state:
+        start_callback_server()
+        st.session_state["flask_started"] = True
+    gen_song_ui()
+
+def display_song_gallery():
+    st.subheader("📁 Generated Songs")
+    gen_song_player_ui()
