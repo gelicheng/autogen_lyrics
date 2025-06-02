@@ -114,12 +114,13 @@ def get_current_playback(access_token):
     except Exception as e:
         return f"Playback info error: {e}"
 
-def search_tracks(access_token, query, limit=5):
+def search_tracks(access_token, query, limit=5, offset=0):
     headers = {"Authorization": f"Bearer {access_token}"}
     params = {
         "q": query,
         "type": "track",
-        "limit": limit
+        "limit": limit,
+        "offset": offset
     }
 
     try:
@@ -157,3 +158,63 @@ def get_playback_queue(access_token):
     except Exception as e:
         st.error(f"Error retrieving playback queue: {e}")
         return []
+
+def create_playlist(access_token, user_id, name="My AI Playlist", description="Created by AI Assistant"):
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "name": name,
+        "description": description,
+        "public": False
+    }
+    try:
+        response = requests.post(
+            f"https://api.spotify.com/v1/users/{user_id}/playlists",
+            headers=headers,
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json().get("id")
+    except Exception as e:
+        st.error(f"Playlist creation error: {e}")
+        return None
+
+def add_track_to_playlist(access_token, playlist_id, track_uri):
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "uris": [track_uri]
+    }
+    try:
+        response = requests.post(
+            f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks",
+            headers=headers,
+            json=payload
+        )
+        if response.status_code in [200, 201]:
+            return "✅ Added to playlist"
+        else:
+            return f"Failed to add track: {response.text}"
+    except Exception as e:
+        return f"Error adding track: {e}"
+    
+def play_playlist(access_token: str, playlist_id: str):
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    data = {
+        "context_uri": f"spotify:playlist:{playlist_id}"
+    }
+    response = requests.put(
+        "https://api.spotify.com/v1/me/player/play",
+        headers=headers,
+        json=data
+    )
+    if response.status_code == 204:
+        return "▶️ Playlist is now playing!"
+    else:
+        return f"⚠️ Failed to start playback: {response.text}"

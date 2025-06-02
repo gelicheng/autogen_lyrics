@@ -31,7 +31,16 @@ def get_spotify_auth():
             client_id=client_id,
             client_secret=client_secret,
             redirect_uri=redirect_uri,
-            scope="playlist-read-private playlist-read-collaborative",
+            scope=(
+                "playlist-read-private "
+                "playlist-read-collaborative "
+                "playlist-modify-private "
+                "playlist-modify-public "
+                "user-read-playback-state "
+                "user-modify-playback-state "
+                "user-read-currently-playing "
+                "user-read-private"  # 建議加上，避免 user info 無法取得
+            ),
             cache_path="./.spotify_cache",  # Explicitly set cache path
             username=None,  # Set to None to use the authenticated user's ID
             show_dialog=True
@@ -61,8 +70,12 @@ def get_spotify_client():
 
         if token_info:
             sp = spotipy.Spotify(auth_manager=sp_oauth)
-            st.session_state['access_token'] = token_info['access_token']
-            print("Spotify client created successfully")  # Debugging line
+
+            if token_info and "access_token" in token_info:
+                st.session_state["access_token"] = token_info["access_token"]
+                print("Spotify client created successfully")  # Debugging line
+            st.session_state["spotify_client"] = sp
+            
             try:
                 user = sp.current_user()
                 print("User info retrieved:", user)  # Debugging line

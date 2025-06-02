@@ -11,3 +11,4 @@ opencc-python-reimplemented>=0.1.6
 spotipy>=2.23.0
 networkx>=2.5
 pyvis>=0.3.2
+flask>=2.0.0
